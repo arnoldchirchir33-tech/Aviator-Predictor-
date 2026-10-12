@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Aviator Predictor</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ==================== AUTH SCREENS ==================== -->
+<div id="authScreen">
+    <div class="auth-box">
+        <h2>AVIATOR PREDICTOR</h2>
+
+        <!-- LOGIN -->
+        <div id="loginForm">
+            <input type="tel" id="loginPhone" placeholder="Phone number (e.g. 07XXXXXXXX)">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button onclick="doLogin()">Sign In</button>
+            <p class="switch">
+                <a href="#" onclick="showForgot()">Forgot Password?</a>
+            </p>
+            <p class="switch">Don't have account? <a href="#" onclick="showRegister()">Register</a></p>
+        </div>
+
+        <!-- REGISTER -->
+        <div id="registerForm" style="display:none;">
+            <input type="tel" id="regPhone" placeholder="Phone number (e.g. 07XXXXXXXX)">
+            <input type="password" id="regPassword" placeholder="Create password">
+            <button onclick="doRegister()">Register</button>
+            <p class="switch">Already have account? <a href="#" onclick="showLogin()">Sign In</a></p>
+        </div>
+
+        <!-- VERIFICATION (after register or login) -->
+        <div id="verifyForm" style="display:none;">
+            <p class="info">Request verification code from the WhatsApp group</p>
+            <a href="https://chat.whatsapp.com/HMX0WBi2bEVAeVA4iwsXeX?s=cl&p=a&mlu=4&ilr=4" 
+               target="_blank" class="whatsapp-btn">Open WhatsApp Group</a>
+            <input type="text" id="verifyCode" placeholder="Enter 6-digit code" maxlength="6">
+            <button onclick="doVerify()">Verify & Start</button>
+            <p class="switch"><a href="#" onclick="showLogin()">Back to Login</a></p>
+        </div>
+
+        <!-- FORGOT PASSWORD - Step 1 -->
+        <div id="forgotForm" style="display:none;">
+            <p class="info">Enter your phone number to reset password</p>
+            <input type="tel" id="forgotPhone" placeholder="Phone number">
+            <button onclick="requestResetCode()">Request Reset Code</button>
+            <p class="switch"><a href="#" onclick="showLogin()">Back to Login</a></p>
+        </div>
+
+        <!-- FORGOT PASSWORD - Step 2 -->
+        <div id="resetForm" style="display:none;">
+            <p class="info">Enter the code sent by admin + new password</p>
+            <input type="text" id="resetCode" placeholder="6-digit reset code" maxlength="6">
+            <input type="password" id="newPassword" placeholder="New password">
+            <button onclick="doResetPassword()">Change Password</button>
+            <p class="switch"><a href="#" onclick="showLogin()">Back to Login</a></p>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== GAME SCREEN ==================== -->
+<div id="gameScreen" style="display:none;">
+    <div class="top-bar">
+        <div class="logo">AVIATOR</div>
+        <div class="timer" id="timer">--:--</div>
+    </div>
+
+    <div class="history-strip" id="historyStrip"></div>
+
+    <div class="game-area" id="gameArea">
+        <canvas id="graphCanvas"></canvas>
+        <div class="sky" id="sky"></div>
+        <div class="multiplier" id="multiplier">1.00x</div>
+        <div class="plane" id="plane">
+            <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 30 L85 22 L105 30 L85 38 Z" fill="#e11d48"/>
+                <path d="M40 30 L55 8 L75 30 Z" fill="#be123c"/>
+                <path d="M40 30 L55 52 L75 30 Z" fill="#9f1239"/>
+                <path d="M15 30 L8 18 L20 30 Z" fill="#be123c"/>
+                <path d="M15 30 L8 42 L20 30 Z" fill="#9f1239"/>
+                <circle cx="78" cy="30" r="6" fill="#fef2f2"/>
+                <circle cx="18" cy="30" r="5" fill="#fbbf24"/>
+            </svg>
+        </div>
+        <div class="status" id="status">Waiting for next round...</div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-play" id="playBtn" onclick="startRound()">PREDICT NEXT ROUND</button>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

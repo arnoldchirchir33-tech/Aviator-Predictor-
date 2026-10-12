@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel – Aviator</title>
+<style>
+    body {
+        background: #0b0f1a;
+        color: #e2e8f0;
+        font-family: system-ui, -apple-system, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+    .box {
+        max-width: 520px;
+        margin: 40px auto;
+        background: #151f32;
+        padding: 28px;
+        border-radius: 16px;
+    }
+    h2 {
+        color: #f43f5e;
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    input {
+        width: 100%;
+        padding: 13px;
+        margin: 10px 0;
+        border: none;
+        border-radius: 10px;
+        background: #0f172a;
+        color: white;
+        font-size: 1rem;
+    }
+    button {
+        width: 100%;
+        padding: 13px;
+        background: #22c55e;
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-top: 8px;
+        cursor: pointer;
+    }
+    button.red { background: #ef4444; }
+    button.small {
+        width: auto;
+        padding: 7px 14px;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    button.copy {
+        background: #3b82f6;
+        margin-left: 8px;
+    }
+    #dashboard { display: none; }
+    .user {
+        background: #1e293b;
+        padding: 14px;
+        border-radius: 12px;
+        margin: 12px 0;
+    }
+    .user-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .phone {
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+    .status {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+    .code-box {
+        margin-top: 12px;
+        background: #0f172a;
+        padding: 10px 14px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .code {
+        color: #4ade80;
+        font-weight: 700;
+        font-size: 1.35rem;
+        letter-spacing: 3px;
+    }
+    .no-code {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-top: 10px;
+    }
+</style>
+</head>
+<body>
+
+<div class="box" id="loginBox">
+    <h2>Admin Login</h2>
+    <input type="text" id="username" placeholder="Username" value="arnold6001">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="adminLogin()">Login</button>
+</div>
+
+<div class="box" id="dashboard">
+    <h2>Admin Panel</h2>
+    <button onclick="loadUsers()">Refresh Users</button>
+    <button class="red" onclick="adminLogout()">Logout</button>
+    <div id="userList" style="margin-top: 24px;"></div>
+</div>
+
+<script>
+async function adminLogin() {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username, password: password })
+    });
+
+    if (res.ok) {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        loadUsers();
+    } else {
+        alert("Wrong username or password");
+    }
+}
+
+async function adminLogout() {
+    await fetch("/api/admin/logout", { method: "POST" });
+    location.reload();
+}
+
+async function loadUsers() {
+    const res = await fetch("/api/admin/users");
+    if (!res.ok) {
+        alert("Session expired. Please login again.");
+        location.reload();
+        return;
+    }
+
+    const data = await res.json();
+    const list = document.getElementById("userList");
+    list.innerHTML = "";
+
+    if (data.users.length === 0) {
+        list.innerHTML = "<p style='text-align:center;color:#94a3b8'>No users registered yet</p>";
+        return;
+    }
+
+    for (let i = 0; i < data.users.length; i++) {
+        const u = data.users[i];
+        const div = document.createElement("div");
+        div.className = "user";
+
+        // Top section
+        const top = document.createElement("div");
+        top.className = "user-top";
+
+        const info = document.createElement("div");
+        const phoneDiv = document.createElement("div");
+        phoneDiv.className = "phone";
+        phoneDiv.textContent = u.phone;
+
+        const statusDiv = document.createElement("div");
+        statusDiv.className = "status";
+        statusDiv.textContent = u.verified ? "Verified" : "Not verified";
+
+        info.appendChild(phoneDiv);
+        info.appendChild(statusDiv);
+
+        const btn = document.createElement("button");
+        btn.className = "small";
+        btn.textContent = "Generate Code";
+        btn.onclick = (function(phone) {
+            return function() {
+                generateCode(phone, btn);
+            };
+        })(u.phone);
+
+        top.appendChild(info);
+        top.appendChild(btn);
+        div.appendChild(top);
+
+        // Code area
+        const codeArea = document.createElement("div");
+        codeArea.id = "code-" + u.phone;
+
+        if (u.code) {
+            const codeBox = document.createElement("div");
+            codeBox.className = "code-box";
+
+            const codeSpan = document.createElement("span");
+            codeSpan.className = "code";
+            codeSpan.id = "code-text-" + u.phone;
+            codeSpan.textContent = u.code;
+
+            const copyBtn = document.createElement("button");
+            copyBtn.className = "small copy";
+            copyBtn.textContent = "Copy";
+            copyBtn.onclick = (function(phone) {
+                return function() {
+                    copyCode(phone);
+                };
+            })(u.phone);
+
+            codeBox.appendChild(codeSpan);
+            codeBox.appendChild(copyBtn);
+            codeArea.appendChild(codeBox);
+        } else {
+            const noCode = document.createElement("div");
+            noCode.className = "no-code";
+            noCode.textContent = "No active code";
+            codeArea.appendChild(noCode);
+        }
+
+        div.appendChild(codeArea);
+        list.appendChild(div);
+    }
+}
+
+async function generateCode(phone, btn) {
+    btn.disabled = true;
+    btn.textContent = "Generating...";
+
+    try {
+        const res = await fetch("/api/admin/generate-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: phone })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.error || "Failed to generate code");
+            btn.disabled = false;
+            btn.textContent = "Generate Code";
+            return;
+        }
+
+        // Build the code display using DOM (no template literals)
+        const area = document.getElementById("code-" + phone);
+        area.innerHTML = "";
+
+        const codeBox = document.createElement("div");
+        codeBox.className = "code-box";
+
+        const codeSpan = document.createElement("span");
+        codeSpan.className = "code";
+        codeSpan.id = "code-text-" + phone;
+        codeSpan.textContent = data.code;
+
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "small copy";
+        copyBtn.textContent = "Copy";
+        copyBtn.onclick = function() {
+            copyCode(phone);
+        };
+
+        codeBox.appendChild(codeSpan);
+        codeBox.appendChild(copyBtn);
+        area.appendChild(codeBox);
+
+    } catch (err) {
+        alert("Network error: " + err.message);
+    }
+
+    btn.disabled = false;
+    btn.textContent = "Generate Code";
+}
+
+function copyCode(phone) {
+    const codeEl = document.getElementById("code-text-" + phone);
+    if (!codeEl) {
+        alert("Code not found");
+        return;
+    }
+
+    const code = codeEl.textContent.trim();
+
+    const temp = document.createElement("textarea");
+    temp.value = code;
+    temp.style.position = "fixed";
+    temp.style.left = "-9999px";
+    document.body.appendChild(temp);
+    temp.select();
+    temp.setSelectionRange(0, 99999);
+
+    try {
+        document.execCommand("copy");
+        document.body.removeChild(temp);
+
+        const btn = codeEl.nextElementSibling;
+        if (btn) {
+            const original = btn.textContent;
+            btn.textContent = "Copied!";
+            btn.style.background = "#22c55e";
+            setTimeout(function() {
+                btn.textContent = original;
+                btn.style.background = "#3b82f6";
+            }, 1500);
+        }
+    } catch (err) {
+        document.body.removeChild(temp);
+        alert("Code: " + code + "\n\nPlease copy it manually");
+    }
+}
+</script>
+</body>
+</html>
